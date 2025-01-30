@@ -16,6 +16,11 @@ class PostRepository extends ServiceEntityRepository
         parent::__construct($registry, Post::class);
     }
 
+    public function GetById(int $id): ?Post
+    {
+        return $this->findOneBy(["id" => $id]);
+    }
+
     //    /**
     //     * @return Post[] Returns an array of Post objects
     //     */

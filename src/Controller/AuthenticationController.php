@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Controller;
-
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class AuthenticationController extends AbstractController
 {
-    #[Route("/api/Authentication/register", methods: [Request::METHOD_POST])]
+    #[Route("/api/register", methods: [Request::METHOD_POST])]
     public function register(Request $request, EntityManagerInterface $entity_manager, UserRepository $user_repository) : JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -43,23 +42,23 @@ class AuthenticationController extends AbstractController
         return new JsonResponse(["message" => "User created successfully!"], Response::HTTP_CREATED);
     }
 
-    #[Route("/api/Authentication/login", methods: "POST")]
-    public function login(Request $request, EntityManagerInterface $entity_manager, UserRepository $user_repository) : JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
+   // #[Route("/api/login", methods: "POST")]
+   // public function login(Request $request, EntityManagerInterface $entity_manager, UserRepository $user_repository) : JsonResponse
+   // {
+   //     $data = json_decode($request->getContent(), true);
 
-        $user = $user_repository->GetByUsername($data["username"]);
+   //     $user = $user_repository->GetByUsername($data["username"]);
 
-        if (!$user)
-        {
-            return new JsonResponse(["error" => "Invalid credentials!"], Response::HTTP_BAD_REQUEST);
-        }
+   //     if (!$user)
+   //     {
+   //         return new JsonResponse(["error" => "Invalid credentials!"], Response::HTTP_BAD_REQUEST);
+   //     }
+   //     
+   //     if (!password_verify($data["password"], $user->getPasswordHash()))
+   //     {
+   //         return new JsonResponse(["error" => "Invalid credentials!"], Response::HTTP_BAD_REQUEST);
+   //     }
 
-        if (!password_verify($data["password"], $user->getPasswordHash()))
-        {
-            return new JsonResponse(["error" => "Invalid credentials!"], Response::HTTP_BAD_REQUEST);
-        }
-
-        return new JsonResponse(["message" => "Successfully authenticated!"], Response::HTTP_OK);
-    }
+   //     return new JsonResponse(["message" => "Successfully authenticated!"], Response::HTTP_OK);
+   // }
 }
