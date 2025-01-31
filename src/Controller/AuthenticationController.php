@@ -22,6 +22,16 @@ class AuthenticationController extends AbstractController
             return new JsonResponse(["error" => "Missing required fields!"], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        if (strlen($data["username"]) > 16 || strlen($data["username"]) < 4)
+        {
+            return new JsonResponse(["error" => "Invalid username length!"], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (strlen($data["password"]) > 32 || strlen($data["password"]) < 8)
+        {
+            return new JsonResponse(["error" => "Invalid password length!"], Response::HTTP_BAD_REQUEST);
+        }
+
         $user = $user_repository->GetByUsername($data["username"]);
 
         if ($user)
@@ -41,24 +51,4 @@ class AuthenticationController extends AbstractController
 
         return new JsonResponse(["message" => "User created successfully!"], Response::HTTP_CREATED);
     }
-
-   // #[Route("/api/login", methods: "POST")]
-   // public function login(Request $request, EntityManagerInterface $entity_manager, UserRepository $user_repository) : JsonResponse
-   // {
-   //     $data = json_decode($request->getContent(), true);
-
-   //     $user = $user_repository->GetByUsername($data["username"]);
-
-   //     if (!$user)
-   //     {
-   //         return new JsonResponse(["error" => "Invalid credentials!"], Response::HTTP_BAD_REQUEST);
-   //     }
-   //     
-   //     if (!password_verify($data["password"], $user->getPasswordHash()))
-   //     {
-   //         return new JsonResponse(["error" => "Invalid credentials!"], Response::HTTP_BAD_REQUEST);
-   //     }
-
-   //     return new JsonResponse(["message" => "Successfully authenticated!"], Response::HTTP_OK);
-   // }
 }

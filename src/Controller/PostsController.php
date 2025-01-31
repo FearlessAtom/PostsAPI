@@ -10,7 +10,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -33,7 +32,7 @@ class PostsController extends AbstractController
     }
     
     #[IsGranted("PUBLIC_ACCESS")]
-    #[Route("/api/posts/{post_id}")]
+    #[Route("/api/posts/{post_id}", methods: [Request::METHOD_GET])]
     public function GetPost(int $post_id, PostRepository $post_repository, SerializerInterface $serialiser)
     {
         $post = $post_repository->GetById($post_id);
@@ -55,9 +54,21 @@ class PostsController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
         
-        if (!isset($data["title"]) || !isset($data["content"]) || !isset($data["user_id"]))
+        if (!isset($data["title"]) || !isset($data["content"]))
         {
             return new JsonResponse(["error" => "Required fields are missing!"], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if (strlen($data["title"]) > 60)
+        {
+            return new JsonResponse(["error" => "Invalid title length! Title must not be more than 60 characters long!"], 
+                Response::HTTP_BAD_REQUEST);
+        }
+
+        if (strlen($data["content"]) > 255)
+        {
+            return new JsonResponse(["error" => "Invalid content length! Content must not be more than 255 characters long!"], 
+                Response::HTTP_BAD_REQUEST);
         }
         
         $token = $token_storage->getToken();
@@ -80,15 +91,13 @@ class PostsController extends AbstractController
         return new JsonResponse($json_content, Response::HTTP_CREATED, [], true);
     }
 
-
-
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
     #[Route("/api/posts/{post_id}", methods: [Request::METHOD_DELETE])]
     public function DeletePost(int $post_id, Request $request, UserRepository $user_repository, SerializerInterface $serializer,
         PostRepository $post_repository, TokenStorageInterface $token_storage, EntityManagerInterface $entity_manager) : Response
     {
         $post = $post_repository->GetById($post_id);
-
+        
         if (!$post)
         {
             return new JsonResponse(["error" => "Post not found!"], Response::HTTP_NOT_FOUND);
@@ -97,13 +106,13 @@ class PostsController extends AbstractController
         $token = $token_storage->getToken();
         $user_id = $token->getUserIdentifier();
         $user = $user_repository->GetById($user_id);
-
+        
         if ($post->getUserId()->getId() != $user_id && !in_array("ROLE_ADMIN", $user->getRoles()))
         {
             return new JsonResponse(["error" => "You cannot delete a post that wasn't created by you!"],
                 Response::HTTP_FORBIDDEN);
         }
-
+        
         $entity_manager->remove($post);
         $entity_manager->flush();
 
@@ -129,7 +138,7 @@ class PostsController extends AbstractController
 
         if ($post->getUserId()->getId() != $user_id && !in_array("ROLE_ADMIN", $user->getRoles()))
         {
-            return new JsonResponse(["error" => "You cannot delete a post that wasn't created by you!"],
+            return new JsonResponse(["error" => "You cannot edit a post that wasn't created by you!"],
                 Response::HTTP_FORBIDDEN);
         }
 
@@ -137,12 +146,24 @@ class PostsController extends AbstractController
 
         if (isset($data["title"]))
         {
+            if (strlen($data["title"]) > 60)
+            {
+                return new JsonResponse(["error" => "Invalid title length! Title must not be more than 60 characters long!"], 
+                    Response::HTTP_BAD_REQUEST);
+            }
+
             $post->setTitle($data["title"]);
         }
 
         if (isset($data["content"]))
         {
             $post->setContent($data["content"]);
+
+            if (strlen($data["content"]) > 255)
+            {
+                return new JsonResponse(["error" => "Invalid content length! Content must not be more than 255 characters long!"], 
+                    Response::HTTP_BAD_REQUEST);
+            }
         }
 
         $entity_manager->flush();
