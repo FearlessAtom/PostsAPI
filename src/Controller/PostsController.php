@@ -21,8 +21,7 @@ class PostsController extends AbstractController
 {
     #[IsGranted("PUBLIC_ACCESS")]
     #[Route("/api/posts", methods: [Request::METHOD_GET])]
-    public function GetPosts(Request $request, EntityManagerInterface $entity_manager,
-    SerializerInterface $serializer): Response
+    public function GetPosts(EntityManagerInterface $entity_manager, SerializerInterface $serializer): Response
     {
         $repository = $entity_manager->getRepository(Post::class);
         $posts = $repository->findAll();
@@ -32,7 +31,23 @@ class PostsController extends AbstractController
 
         return new JsonResponse($json_content, Response::HTTP_OK, [], true);
     }
+    
+    #[IsGranted("PUBLIC_ACCESS")]
+    #[Route("/api/posts/{post_id}")]
+    public function GetPost(int $post_id, PostRepository $post_repository, SerializerInterface $serialiser)
+    {
+        $post = $post_repository->GetById($post_id);
 
+        if (!$post)
+        {
+            return new JsonResponse(["error" => "Post not found!"], Response::HTTP_NOT_FOUND);
+        }
+
+        $json_content = $serialiser->serialize($post, "json", ["groups" => "post:read"]);
+
+        return new JsonResponse($json_content, Response::HTTP_OK, [], true);
+    }
+    
     #[Route("/api/posts", methods: [Request::METHOD_POST])]
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
     public function AddPost(Request $request, EntityManagerInterface $entity_manager,
@@ -64,6 +79,8 @@ class PostsController extends AbstractController
         $json_content = $serializer->serialize($post, "json", ["groups" => "post:read"]);
         return new JsonResponse($json_content, Response::HTTP_CREATED, [], true);
     }
+
+
 
     #[IsGranted("IS_AUTHENTICATED_FULLY")]
     #[Route("/api/posts/{post_id}", methods: [Request::METHOD_DELETE])]
