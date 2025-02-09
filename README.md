@@ -4,6 +4,10 @@
 ```
 composer install
 ```
+### Generate JWT SSL keypair
+```
+php bin/console lexik:jwt:generate-keypair
+```
 ### Start the server
 ```
 symfony serve
